@@ -15,6 +15,7 @@
 
     body {
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -146,6 +147,7 @@
       user-select: none;
       -webkit-appearance: none;
       appearance: none;
+      touch-action: manipulation;
       outline: none;
     }
 
@@ -303,32 +305,43 @@
   </div>
 
   <script>
-    // 청량한 물방울 소리 (Web Audio API)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 청량한 물방울 소리 (Web Audio API) - 첫 터치 시 초기화
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
 
     function playClick(type = 'num') {
-      const osc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      osc.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
 
-      if (type === 'op') {
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.08);
-      } else if (type === 'equal') {
-        osc.frequency.setValueAtTime(660, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.12);
-      } else {
-        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.07);
-      }
+        if (type === 'op') {
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.08);
+        } else if (type === 'equal') {
+          osc.frequency.setValueAtTime(660, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.12);
+        } else {
+          osc.frequency.setValueAtTime(1200, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.07);
+        }
 
-      osc.type = 'sine';
-      gainNode.gain.setValueAtTime(0.18, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        osc.type = 'sine';
+        gainNode.gain.setValueAtTime(0.18, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
 
-      osc.start(audioCtx.currentTime);
-      osc.stop(audioCtx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      } catch(e) {}
     }
 
     let current    = '0';
